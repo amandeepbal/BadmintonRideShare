@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commute Rideshare</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f0f4f8;
+    }
+    .container {
+        background-color: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 25px;
+    }
+    .navigation {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    .navigation a, .navigation button {
+        padding: 12px 20px;
+        text-decoration: none;
+        color: white;
+        background-color: #3498db;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .navigation a.active, .navigation button:hover {
+        background-color: #2980b9;
+    }
+    form {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
+        gap: 10px;
+        margin-bottom: 25px;
+        align-items: center;
+    }
+    form input {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+    }
+    form button {
+        padding: 12px 20px;
+        background-color: #2ecc71;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    form button:hover {
+        background-color: #27ae60;
+    }
+    .delete-archived {
+        background-color: #e74c3c !important;
+        margin-top: 10px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    .archived-row {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+    .action-icons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+    .action-icons form {
+        margin: 0;
+        display: inline-block;
+    }
+    .action-icons button {
+        background: none;
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .action-icons .edit-btn {
+        color: #3498db;
+    }
+    .action-icons .delete-btn {
+        color: #e74c3c;
+    }
+    .ride-details {
+        display: flex;
+        flex-direction: column;
+    }
+    .ride-details strong {
+        color: #2c3e50;
+    }
+    .ride-details small {
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 8px;
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+    }
+    .close-modal {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close-modal:hover {
+        color: #000;
+    }
+    /* Modal Body Styles */
+    .modal-body form {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 15px;
+        align-items: center;
+    }
+    .modal-body form div {
+        display: contents;
+    }
+    .modal-body label {
+        text-align: right;
+        padding-right: 10px;
+        color: #555;
+    }
+    .modal-body input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+    }
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .modal-footer button {
+        padding: 10px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .modal-footer button:first-child {
+        background-color: #95a5a6;
+        color: white;
+        border: none;
+    }
+    .modal-footer button:last-child {
+        background-color: #2ecc71;
+        color: white;
+        border: none;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Commute Rideshare Tracker</h1>
+        
+        <div class="navigation">
+            <a href="/" class="<%= view === 'active' ? 'active' : '' %>">Active Rides</a>
+            <a href="/archived" class="<%= view === 'archived' ? 'active' : '' %>">Archived Rides</a>
+        </div>
+
+        <% if (view === 'active') { %>
+            <form action="/rides" method="POST">
+                <input type="text" name="driverName" placeholder="Driver Name" required>
+                <input type="date" name="rideDate" id="todayDate" required>
+                <input type="text" name="notes" placeholder="Optional Notes">
+                <button type="submit">Add Ride</button>
+            </form>
+        <% } %>
+
+        <% if (view === 'archived') { %>
+            <form action="/delete-archived" method="POST">
+                <button type="submit" class="delete-archived">Delete All Archived Rides</button>
+            </form>
+        <% } %>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Ride Details</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (rides && rides.length > 0) { %>
+                    <% rides.forEach(function(ride) { %>
+                        <tr class="<%= ride.is_archived ? 'archived-row' : '' %>">
+                            <td>
+                                <div class="ride-details">
+                                    <strong><%= ride.driver_name %></strong>
+                                    <small><%= new Date(ride.ride_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) %></small>
+                                    <% if (ride.notes) { %>
+                                        <small><%= ride.notes %></small>
+                                    <% } %>
+                                </div>
+                            </td>
+                            <td>
+                                <% if (view === 'active') { %>
+                                    <div class="action-icons">
+                                        <button class="edit-btn" onclick="openUpdateModal('<%= ride.id %>', '<%= ride.driver_name %>', '<%= ride.ride_date %>', '<%= ride.notes || '' %>')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form action="/rides/delete/<%= ride.id %>" method="POST" style="display: inline;">
+                                            <button type="submit" class="delete-btn">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                <% } %>
+                                <% if (view === 'archived') { %>
+                                    <div class="action-icons">
+                                        <form action="/rides/delete/<%= ride.id %>" method="POST" style="display: inline;">
+                                            <button type="submit" class="delete-btn">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="2">No rides recorded</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Update Modal -->
+    <div id="updateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Ride</h2>
+                <span class="close-modal" onclick="closeUpdateModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="updateRideForm" action="/rides/update/" method="POST">
+                    <input type="hidden" id="updateRideId" name="id">
+                    <div>
+                        <label for="updateDriverName">Driver Name</label>
+                        <input type="text" id="updateDriverName" name="driverName" required>
+                    </div>
+                    
+                    <div>
+                        <label for="updateRideDate">Ride Date</label>
+                        <input type="date" id="updateRideDate" name="rideDate" required>
+                    </div>
+                    
+                    <div>
+                        <label for="updateNotes">Notes</label>
+                        <input type="text" id="updateNotes" name="notes">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeUpdateModal()">Cancel</button>
+                <button onclick="submitUpdateForm()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set default date to today
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('todayDate').value = today;
+        });
+
+        function openUpdateModal(id, driverName, rideDate, notes) {
+            const modal = document.getElementById('updateModal');
+            const form = document.getElementById('updateRideForm');
+            
+            // Set form action dynamically
+            form.action = `/rides/update/${id}`;
+            
+            // Populate form fields
+            document.getElementById('updateRideId').value = id;
+            document.getElementById('updateDriverName').value = driverName;
+            document.getElementById('updateRideDate').value = rideDate;
+            document.getElementById('updateNotes').value = notes;
+            
+            // Show modal
+            modal.style.display = 'block';
+        }
+
+        function closeUpdateModal() {
+            const modal = document.getElementById('updateModal');
+            modal.style.display = 'none';
+        }
+
+        function submitUpdateForm() {
+            const form = document.getElementById('updateRideForm');
+            form.submit();
+        }
+
+        // Close modal if clicked outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('updateModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
